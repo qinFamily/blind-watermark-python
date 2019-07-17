@@ -20,18 +20,18 @@ original image<br>
 ![image](https://github.com/qinFamily/blind-watermark-python/blob/master/imgs/ori.png)
 
 watermark<br>
-![image](https://github.com/linyacool/blind-watermark-python/blob/master/imgs/watermark.png)
+![image](https://github.com/qinFamily/blind-watermark-python/blob/master/imgs/watermark.png)
 
 
 ```shell
-python encode.py --image ori.png --watermark watermark.png --result res.png
+python encode.py --image imgs/ori.png --watermark imgs/watermark.png --result imgs/res.png
 ```
 result<br>
-![image](https://github.com/linyacool/blind-watermark-python/blob/master/imgs/res.png)
+![image](https://github.com/qinFamily/blind-watermark-python/blob/master/imgs/res.png)
 
 ## decode:
 ```shell
-python decode.py --original ori.png --image res.png --result extract.png
+python decode.py --original imgs/ori.png --image imgs/res.png --result imgs/extract.png
 ```
 watermark<br>
-![image](https://github.com/linyacool/blind-watermark-python/blob/master/imgs/extract.png)
+![image](https://github.com/qinFamily/blind-watermark-python/blob/master/imgs/extract.png)
