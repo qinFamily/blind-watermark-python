@@ -5,7 +5,7 @@ import cv2
 
 '''
 
-https://www.cnblogs.com/shizhengwen/p/8719062.html
+https://www.cnblogs.com/shizhengwen/p/8719062.html 6.3.5 代码：图片数据增加小工具
 
 定义裁剪函数，四个参数分别是：
 左上角横坐标x0

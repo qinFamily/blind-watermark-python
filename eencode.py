@@ -1,7 +1,7 @@
 # coding=utf-8
 import cv2
 import numpy as np
-import random
+import random, sys
 import os, os.path
 from argparse import ArgumentParser
 ALPHA = 5
@@ -55,10 +55,23 @@ def imread(path):
         return newimg
     return img
 
+# 灰度
+# newrows, newcols = cv2.cvtColor(out, cv2.COLOR_BGR2GRAY).shape #cvtcolor 是颜色转换参数
+'''
+定义裁剪函数，四个参数分别是：
+左上角横坐标x0
+左上角纵坐标y0
+裁剪宽度w
+裁剪高度h
+'''
+crop_image = lambda img, x0, y0, w, h: img[y0:y0+h, x0:x0+w]
+
+#旋转
 def rotate(src, angle):
     radian = (float) (angle /180.0 * np.pi)
-    # 填充图像
-    rows, cols = cv2.cvtColor(src, cv2.COLOR_BGR2GRAY).shape    #cvtcolor 是颜色转换参数
+    # 填充图像 
+    rows, cols = src.shape[:2]    #cvtcolor 是颜色转换参数
+    print("rows, cols",rows, cols)
     maxBorder =(int) (max(rows, cols)) # 即为sqrt(2)*max  / np.sin(radian)
     dx = int((maxBorder - cols)/2)
     dy = int((maxBorder - rows)/2)
@@ -82,7 +95,8 @@ def rotate(src, angle):
     
     '''
     out = cv2.copyMakeBorder(src, dy, dy, dx, dx, cv2.BORDER_CONSTANT, value=0)
-    newrows, newcols = cv2.cvtColor(out, cv2.COLOR_BGR2GRAY).shape
+    
+    newrows, newcols = out.shape[:2]
     # print("newrows, newcols", newrows, newcols)
     # 旋转
     center = ((float)(newcols/2) , (float) (newrows/2))
@@ -97,17 +111,81 @@ def rotate(src, angle):
     # pts4 = np.float32([[0,0],[300,0],[0,300],[300,300]])
     # M_perspective = cv2.getPerspectiveTransform(pts3,pts4)
     # out1 = cv2.warpPerspective(out, M_perspective, (newcols, newrows) )
-
+    
+    # 存图片
     # cv2.imwrite(outputName + os.path.sep + 'pic_' + str(angle) + '.jpg', out1)
 
+    # https://www.cnblogs.com/wxl845235800/p/9600606.html
+    # 旋转点坐标映射公式
+    # x'=x*cos(a)-y*sin(a);
+    # y'=x*sin(a)+y*cos(a);
+
+    # 正向映射公式，同时引入旋转中心平移：
+    # x'= (x - rx0)*cos(RotaryAngle) + (y - ry0)*sin(RotaryAngle) + rx0 ;
+    # y'=-(x - rx0)*sin(RotaryAngle) + (y - ry0)*cos(RotaryAngle) + ry0 ;
+
     # //计算图像旋转之后包含图像的最大的矩形
-    # sinVal = abs(np.sin(radian))
-    # cosVal = abs(np.cos(radian))
-    # ((int)(src.cols * cosVal +src.rows * sinVal),(int)(src.cols * sinVal + src.rows * cosVal) )
+    sinVal = abs(np.sin(radian))
+    cosVal = abs(np.cos(radian))
+    # print(sinVal, cosVal)
+    # 原图像在新图的坐标
+    start1 = [0, dy - rows / 2]
+    start2 = [0, dy + rows / 2]
+    end1 = [cols, dy - rows / 2]
+    end2 = [cols, dy + rows / 2]
+    print(start1, start2, end1, end2)
+
+    newStart1 = (abs(start1[0]*cosVal-start1[1]*sinVal), start1[0]*sinVal+start1[1]*cosVal)
+    newStart2 = (abs(start2[0]*cosVal-start2[1]*sinVal), start2[0]*sinVal+start2[1]*cosVal)
+    newEnd1 = (end1[0]*cosVal-end1[1]*sinVal, end1[0]*sinVal+end1[1]*cosVal)
+    newEnd2 = (end2[0]*cosVal-end2[1]*sinVal, end2[0]*sinVal+end2[1]*cosVal)
+    print(newStart1, newStart2, newEnd1, newEnd2)
+
+    rectxs = int(min(newStart1[0],newStart2[0],newEnd1[0],newEnd2[0]))
+    rectxe = int(max(newStart1[0],newStart2[0],newEnd1[0],newEnd2[0]))
+    rectys = int(min(newStart1[1],newStart2[1],newEnd1[1],newEnd2[1]))
+    rectye = int(max(newStart1[1],newStart2[1],newEnd1[1],newEnd2[1]))
+    print(rectxs, rectxe, rectys, rectye)
+    cv2.imshow("rotate111", out1[rectxs:rectxe, rectys:rectye])
+
     # int x = (out1.cols - targetSize.width) / 2
     # int y = (out1.rows - targetSize.height) / 2
     # Rect rect(x, y, targetSize.width, targetSize.height)
     # dst = Mat(dst,rect)
+
+#平铺 将img的图片平铺到newWidth, newHeight的图像中
+def fillEmpty(img, dstHeight, dstWidth):
+    h, w = img.shape[:2]
+    
+    newHeight = h * int(np.ceil(dstHeight/h))
+    newWidth  = w * int(np.ceil(dstWidth/w))
+
+    #generate a blank photo
+    newImg = np.zeros(shape=(newHeight,newWidth,3),dtype=np.uint8)
+    # cv2.imshow('img0',newImg)
+    #copy each pixels'value
+    img_x = 0
+    img_y = 0
+    for now_y in range(newHeight):
+        for now_x in range(newWidth):
+            newImg[now_y,now_x,0] = img[img_y,img_x,0]
+            newImg[now_y,now_x,1] = img[img_y,img_x,1]
+            newImg[now_y,now_x,2] = img[img_y,img_x,2]
+            img_x +=1
+            #超过原图列数范围，归0，重新开始复制
+            if img_x >= w:
+                img_x = 0
+        img_y +=1
+        if img_y >=h:
+            img_y = 0
+        # print('.')
+    # 变形
+    # newImg = cv2.resize(newImg, (dstWidth, dstHeight))
+    # 裁剪
+    newImg = newImg[0:dstHeight, 0:dstWidth]
+    # cv2.namedWindow('fillEmpty')
+    cv2.imshow('fillEmpty',newImg)
+    cv2.imwrite("newmark.png",newImg)
 
 
 def encode(img_path, wm_path, res_path, alpha):
@@ -118,6 +196,9 @@ def encode(img_path, wm_path, res_path, alpha):
     
     ## 水印图像旋转
     newWatermark = rotate(watermark, 30)
+    
+    # 平铺
+    fillEmpty(newWatermark, height, width)
 
     wm_height, wm_width = newWatermark.shape[0], newWatermark.shape[1]
     

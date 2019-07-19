@@ -1,18 +1,21 @@
 # coding=utf-8
+
+# python encode.py -i 22.jpg -w newmark1.png -r rm1.png
+
 import cv2
 import numpy as np
 import random
 import os
 from argparse import ArgumentParser
-ALPHA = 5
+ALPHA = 20
 
 
 def build_parser():
     parser = ArgumentParser()
-    parser.add_argument('--image', dest='img', required=True)
-    parser.add_argument('--watermark', dest='wm', required=True)
-    parser.add_argument('--result', dest='res', required=True)
-    parser.add_argument('--alpha', dest='alpha', default=ALPHA)
+    parser.add_argument('-i', dest='img', required=True)
+    parser.add_argument('-w', dest='wm', required=True)
+    parser.add_argument('-r', dest='res', required=True)
+    parser.add_argument('-a', dest='alpha', default=ALPHA)
     return parser
 
 
@@ -36,12 +39,12 @@ def encode(img_path, wm_path, res_path, alpha):
     height, width, channel = np.shape(img)
     watermark = cv2.imread(wm_path)
     wm_height, wm_width = watermark.shape[0], watermark.shape[1]
-    x, y = list(range(int(height / 2))), list(range(width))
+    x, y = list(range(int(height / 1))), list(range(width))
     random.seed(height + width)
     random.shuffle(x)
     random.shuffle(y)
     tmp = np.zeros(img.shape)
-    for i in range(int(height / 2)):
+    for i in range(int(height / 1)):
         for j in range(width):
             if x[i] < wm_height and y[j] < wm_width:
                 tmp[i][j] = watermark[x[i]][y[j]]
@@ -49,7 +52,8 @@ def encode(img_path, wm_path, res_path, alpha):
     res_f = img_f + alpha * tmp
     res = np.fft.ifft2(res_f)
     res = np.real(res)
-    cv2.imwrite(res_path, res, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+    # cv2.imwrite(res_path, res, [int(cv2.IMWRITE_JPEG_QUALITY), 100])
+    cv2.imwrite(res_path, res, [int(cv2.IMWRITE_PNG_COMPRESSION), 7])
 
 
 if __name__ == '__main__':

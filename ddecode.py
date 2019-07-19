@@ -21,6 +21,8 @@ def build_parser():
     parser.add_argument('-r', dest='res', required=True)
     parser.add_argument('-a', dest='alpha', default=ALPHA)
     parser.add_argument('-c', dest='compress', default=False)
+    parser.add_argument('-d', dest='decodeMethod', default="origin")
+
     return parser
 
 
@@ -31,13 +33,14 @@ def main():
     img = options.img
     res = options.res
     compress = options.compress
+    decodeMethod = options.decodeMethod
 
     alpha = float(options.alpha)
     if not os.path.isfile(ori):
         parser.error("original image %s does not exist." % ori)
     if not os.path.isfile(img):
         parser.error("image %s does not exist." % img)
-    decode(ori, img, res, alpha, compress)
+    decode(ori, img, res, alpha, compress, decodeMethod)
 
 #使用灰度图像
 def gray_image(image):
@@ -113,7 +116,7 @@ def mergeWithPosition(ori, src, left, top, right, bottom):
 
 import eencode as ec
 
-def decode(ori_path, img_path, res_path, alpha, compress):
+def decode(ori_path, img_path, res_path, alpha, compress, decodeMethod="origin"):
     ori = cv2.imread(ori_path)
     # cv2.imshow("ori", ori)
 
@@ -145,11 +148,11 @@ def decode(ori_path, img_path, res_path, alpha, compress):
     watermark = np.real(watermark)
     res = np.zeros(watermark.shape)
     random.seed(height + width)
-    x = list(range(int(height / 2)))
+    x = list(range(int(height / 1)))
     y = list(range(width))
     random.shuffle(x)
     random.shuffle(y)
-    for i in range(int(height / 2)):
+    for i in range(int(height / 1)):
         for j in range(width):
             res[x[i]][y[j]] = watermark[i][j]
 
