@@ -209,3 +209,99 @@ def main():
 
 if __name__ == '__main__':
     main()
+
+
+
+
+'''
+
+#旋转
+def rotate(src, angle):
+    radian = (float) (angle /180.0 * np.pi)
+    # 填充图像 
+    rows, cols = src.shape[:2]    #cvtcolor 是颜色转换参数
+    print("rows, cols",rows, cols)
+    maxBorder =(int) (max(rows, cols)) # 即为sqrt(2)*max  / np.sin(radian)
+    dx = int((maxBorder - cols)/2)
+    dy = int((maxBorder - rows)/2)
+    # print("dx, dy",dx, dy)
+
+    # 固定值边框，统一都填充0也称为zero padding
+
+    '''
+        给源图像增加边界
+
+        cv2.copyMakeBorder(src,top, bottom, left, right ,borderType,value)
+        src:源图像
+        top,bottem,left,right: 分别表示四个方向上边界的长度
+        borderType: 边界的类型
+            有以下几种：
+            BORDER_REFLICATE　　　  # 直接用边界的颜色填充， aaaaaa | abcdefg | gggg
+            BORDER_REFLECT　　　　  # 倒映，abcdefg | gfedcbamn | nmabcd
+            BORDER_REFLECT_101　　 # 倒映，和上面类似，但在倒映时，会把边界空开，abcdefg | egfedcbamne | nmabcd
+            BORDER_WRAP　　　　  　# 额。类似于这种方式abcdf | mmabcdf | mmabcd
+            BORDER_CONSTANT　　　　# 常量，增加的变量通通为value色 [value][value] | abcdef | [value][value][value]
+    
+    '''
+    out = cv2.copyMakeBorder(src, dy, dy, dx, dx, cv2.BORDER_CONSTANT, value=0)
+    
+    newrows, newcols = out.shape[:2]
+    # print("newrows, newcols", newrows, newcols)
+    # 旋转
+    center = ((float)(newcols/2) , (float) (newrows/2))
+    affine_matrix = cv2.getRotationMatrix2D( center, angle, 1.0 )
+    # 仿射
+    # https://docs.opencv.org/4.1.0/da/d54/group__imgproc__transform.html#ga0203d9ee5fcd28d40dbc4a1ea4451983
+    # https://docs.opencv.org/4.1.0/da/d54/group__imgproc__transform.html#gga5bb5a1fea74ea38e1a5445ca803ff121ac97d8e4880d8b5d509e96825c7522deb
+    out1 = cv2.warpAffine(out, affine_matrix, (newcols, newrows), cv2.WARP_FILL_OUTLIERS)
+    cv2.imshow("rotate", out1)
+    return out1
+
+    # 透视变换
+    # pts3 = np.float32([[56,65],[368,52],[28,387],[389,390]])
+    # pts4 = np.float32([[0,0],[300,0],[0,300],[300,300]])
+    # M_perspective = cv2.getPerspectiveTransform(pts3,pts4)
+    # out1 = cv2.warpPerspective(out, M_perspective, (newcols, newrows) )
+    
+    # 存图片
+    # cv2.imwrite(outputName + os.path.sep + 'pic_' + str(angle) + '.jpg', out1)
+
+    # https://www.cnblogs.com/wxl845235800/p/9600606.html
+    # 旋转点坐标映射公式
+    # x'=x*cos(a)-y*sin(a);
+    # y'=x*sin(a)+y*cos(a);
+
+    # 正向映射公式，同时引入旋转中心平移：
+    # x'= (x - rx0)*cos(RotaryAngle) + (y - ry0)*sin(RotaryAngle) + rx0 ;
+    # y'=-(x - rx0)*sin(RotaryAngle) + (y - ry0)*cos(RotaryAngle) + ry0 ;
+
+    # //计算图像旋转之后包含图像的最大的矩形
+    sinVal = abs(np.sin(radian))
+    cosVal = abs(np.cos(radian))
+    # print(sinVal, cosVal)
+    # 原图像在新图的坐标
+    start1 = [0, dy - rows / 2]
+    start2 = [0, dy + rows / 2]
+    end1 = [cols, dy - rows / 2]
+    end2 = [cols, dy + rows / 2]
+    print(start1, start2, end1, end2)
+
+    newStart1 = (abs(start1[0]*cosVal-start1[1]*sinVal), start1[0]*sinVal+start1[1]*cosVal)
+    newStart2 = (abs(start2[0]*cosVal-start2[1]*sinVal), start2[0]*sinVal+start2[1]*cosVal)
+    newEnd1 = (end1[0]*cosVal-end1[1]*sinVal, end1[0]*sinVal+end1[1]*cosVal)
+    newEnd2 = (end2[0]*cosVal-end2[1]*sinVal, end2[0]*sinVal+end2[1]*cosVal)
+    print(newStart1, newStart2, newEnd1, newEnd2)
+
+    rectxs = int(min(newStart1[0],newStart2[0],newEnd1[0],newEnd2[0]))
+    rectxe = int(max(newStart1[0],newStart2[0],newEnd1[0],newEnd2[0]))
+    rectys = int(min(newStart1[1],newStart2[1],newEnd1[1],newEnd2[1]))
+    rectye = int(max(newStart1[1],newStart2[1],newEnd1[1],newEnd2[1]))
+    print(rectxs, rectxe, rectys, rectye)
+    cv2.imshow("rotate111", out1[rectxs:rectxe, rectys:rectye])
+
+    # int x = (out1.cols - targetSize.width) / 2
+    # int y = (out1.rows - targetSize.height) / 2
+    # Rect rect(x, y, targetSize.width, targetSize.height)
+    # dst = Mat(dst,rect)
+
+'''    
